@@ -3,7 +3,7 @@ project for comp561
 
 
 ```buildoutcfg
-export PYTHONPAHT= LOCAL_PACKAGE_PATH 
+export PYTHONPATH = LOCAL_PACKAGE_PATH 
 cd LOCAL_PACKAGE_PATH
 ```
 
