@@ -4,7 +4,7 @@ import numpy as np
 from src.utils.utils import sequence_one_hot
 
 def gapped_alignment(query, reference, pos_q, pos_r, score_method, substitution,
-                     gap_penalty, gap_bias = 0, reverse = False):
+                     mismatch_score, gap_penalty, gap_bias = 0, reverse = False):
     """
     compute a gapped alignment
     generates an alignment between the query and the reference sequences
@@ -68,7 +68,7 @@ def gapped_alignment(query, reference, pos_q, pos_r, score_method, substitution,
         for j in range(1, len(s_reference_matrix)+1):
             probas_ref = s_reference_matrix[j-1]
             letter_query = s_query_one_hot[i-1]
-            sub_score = UNGAPPED_SCORE_ALGORITHM[score_method](probas_ref, letter_query, substitution)
+            sub_score = ungapped_extension.UNGAPPED_SCORE_ALGORITHM[score_method](probas_ref, letter_query, mismatch_score, substitution)
             M1 = sM[i-1, j-1] + sub_score
             X1 = sX[i-1, j-1] + sub_score
             Y1 = sY[i-1, j-1] + sub_score
@@ -172,12 +172,12 @@ def gapped_alignment(query, reference, pos_q, pos_r, score_method, substitution,
         string_query = string_query[::-1]
         string_reference = string_reference[::-1]
     else:
-        final_ref_position = pos_r + alignment_length
-    
+        final_ref_position = pos_r + alignment_length    
     return(string_query, string_reference, final_ref_position, final_score)
 
 
-def gapped_extension(query, reference, ungapped_dict, score_method, substitution_dict, gap_penalty, gap_bias):
+def gapped_extension(query, reference, ungapped_dict, score_method,
+                     substitution_dict, gap_penalty, gap_bias, mismatch_score):
     """
     compute a gapped alignment
     generates an alignment between the query and the reference sequences
@@ -193,17 +193,24 @@ def gapped_extension(query, reference, ungapped_dict, score_method, substitution
     :return: gapped_extensions dict (positions, scores and strings)
     """
     gapped_extensions = dict()
+    #
+    COUNT = 0
+    #
     
     for extension in ungapped_dict:
         # (tmp_pos_left_query, tmp_pos_right_query)] = [(tmp_pos_left_ref, tmp_pos_right_ref), tmp_score_left + tmp_score_right
         pos_left_q = extension[0]
         pos_right_q = extension[1]
+        
+        print(pos_left_q, pos_right_q)
+        
         for pos_ref, score in ungapped_dict[extension]:
             # Extend to the left
-            (string_ql, string_rl, pos_l, score_l) = gapped_alignment(query, reference, pos_left_q, pos_ref[0], score_method, substitution_dict, gap_penalty, reverse = True)
+            (string_ql, string_rl, pos_l, score_l) = gapped_alignment(query, reference, pos_left_q, pos_ref[0], score_method, substitution_dict, mismatch_score, gap_penalty, reverse = True)
+                
             # Extend to the right
-            (string_qr, string_rr, pos_r, score_r) = gapped_alignment(query, reference, pos_right_q, pos_ref[1], score_method, substitution_dict, gap_penalty)
-            
+            (string_qr, string_rr, pos_r, score_r) = gapped_alignment(query, reference, pos_right_q, pos_ref[1], score_method, substitution_dict, mismatch_score, gap_penalty)
+                
             new_score = score + score_l + score_r
             new_query_string = string_ql + query[pos_left_q:(pos_right_q+1)] + string_qr
             #TODO write a method to get the consensus sequence

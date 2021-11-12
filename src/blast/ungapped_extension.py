@@ -5,7 +5,8 @@ import pickle
 UNGAPPED_SCORE_ALGORITHM = Registry()
 
 @UNGAPPED_SCORE_ALGORITHM.register('sum_proba_score')
-def sum_proba_score(ref_letter_prob, query_letter_one_hot, substitution=dict()):
+def sum_proba_score(ref_letter_prob, query_letter_one_hot, mismatch_score=1,
+                    substitution=dict()):
     """
     compute score for
     :param ref_letter_prob: 1D array giving the proba for each letter in ref
@@ -15,12 +16,12 @@ def sum_proba_score(ref_letter_prob, query_letter_one_hot, substitution=dict()):
     """
     score = 0
     for i, p in enumerate(ref_letter_prob):
-        score += p * query_letter_one_hot[i] - p * (query_letter_one_hot[i] != 1)
+        score += p * query_letter_one_hot[i] - mismatch_score *p * (query_letter_one_hot[i] != 1)
     return score
 
 
 def ungapped_extension(query, matches_dict, reference_matrix_file, k, delta,
-                       score_method, substitution=dict()):
+                       mismatch_score=1, score_method, substitution=dict()):
     """
     compute ungapped extension
     generates ungapped extended matches and corresponding HSP scores
