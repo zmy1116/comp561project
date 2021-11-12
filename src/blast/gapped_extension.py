@@ -1,6 +1,7 @@
 from src.blast import ungapped_extension
 
-def gapped_alignment(query, reference, pos_q, pos_r, score_method, substitution, gap_penalty, gap_bias = 0, reverse = False):
+def gapped_alignment(query, reference, pos_q, pos_r, score_method, substitution,
+                     gap_penalty, gap_bias = 0, reverse = False):
     """
     compute a gapped alignment
     generates an alignment between the query and the reference sequences
@@ -10,7 +11,7 @@ def gapped_alignment(query, reference, pos_q, pos_r, score_method, substitution,
     :param pos_q: position of the query at which to start the alignment
     :param pos_r: position of the reference at which to start the alignment
     :param score_method: method used to compute extension score
-    :param substitution_dict: stores the cost of replacing one letter by another (typically from BLOSUM matrices)
+    :param substitution_dict: stores the cost of replacing one letter by another
     :param gap_penalty: cost of a gap in the alignment
     :param gap_bias: cost for opening a gap, if affine function
     :param reverse: if the alignment going downstream? (default: False)
@@ -190,18 +191,18 @@ def gapped_extension(query, reference, ungapped_dict, score_method, substitution
         # (tmp_pos_left_query, tmp_pos_right_query)] = [(tmp_pos_left_ref, tmp_pos_right_ref), tmp_score_left + tmp_score_right
         pos_left_q = extension[0]
         pos_right_q = extension[1]
-        (pos_ref, score) = ungapped_dict[extension]
-        # Extend to the left
-        (string_ql, string_rl, pos_l, score_l) = gapped_alignment(query, reference, pos_left_q, pos_ref[0], score_method, substitution_dict, gap_penalty, reverse = True)
-        # Extend to the right
-        (string_qr, string_rr, pos_r, score_r) = gapped_alignment(query, reference, pos_right_q, pos_ref[1], score_method, substitution_dict, gap_penalty)
-        
-        new_score = score + score_l + score_r
-        new_query_string = string_ql + query[pos_left_q:(pos_right_q+1)] + string_qr
-        #TODO write a method to get the consensus sequence
-        new_ref_string = string_rl + "".join(["ACGT"[np.argmax(s_reference_matrix[k])] for k in range(pos_ref[0],(pos_ref[1]+1))]) + string_rr
-        gapped_extensions[(pos_l, pos_r)] = [new_query_string, new_ref_string, new_score]
-        
+        for pos_ref, score in ungapped_dict[extension]:
+            # Extend to the left
+            (string_ql, string_rl, pos_l, score_l) = gapped_alignment(query, reference, pos_left_q, pos_ref[0], score_method, substitution_dict, gap_penalty, reverse = True)
+            # Extend to the right
+            (string_qr, string_rr, pos_r, score_r) = gapped_alignment(query, reference, pos_right_q, pos_ref[1], score_method, substitution_dict, gap_penalty)
+            
+            new_score = score + score_l + score_r
+            new_query_string = string_ql + query[pos_left_q:(pos_right_q+1)] + string_qr
+            #TODO write a method to get the consensus sequence
+            new_ref_string = string_rl + "".join(["ACGT"[np.argmax(s_reference_matrix[k])] for k in range(pos_ref[0],(pos_ref[1]+1))]) + string_rr
+            gapped_extensions[(pos_l, pos_r)] = [new_query_string, new_ref_string, new_score]
+    return gapped_extensions
 
 
 if __name__ == "main":

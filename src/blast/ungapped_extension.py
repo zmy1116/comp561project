@@ -29,13 +29,14 @@ def ungapped_extension(query, matches_dict, reference_matrix_file, k, delta,
     :param k: seed size
     :param delta: max allowed score drop before extension is stopped, positive value
     :param score_method: method used to compute extension score
-    :param substitution_dict: stores the cost of replacing one letter by another (typically from BLOSUM matrices)
+    :param substitution_dict: stores the cost of replacing one letter by another
     :return: ungapped_extensions dict (positions and scores)
     """
     assert score_method in UNGAPPED_SCORE_ALGORITHM
 
     query_one_hot = sequence_one_hot(query)
     reference_matrix = pickle.load(open(reference_matrix_file, 'rb'))
+    ref_length, _ = reference_matrix.shape
 
     ungapped_extensions = dict()
 
@@ -62,7 +63,7 @@ def ungapped_extension(query, matches_dict, reference_matrix_file, k, delta,
 
             # Left
             diff_left = current_score_left - tmp_score_left
-            while (diff_left > -delta) and (current_pos_left_ref > 0) and (current_pos_left_query > 0):
+            while (diff_left > -delta) and (current_pos_left_ref > 1) and (current_pos_left_query > 1):
                 current_pos_left_ref -= 1
                 current_pos_left_query -= 1
 
@@ -79,7 +80,7 @@ def ungapped_extension(query, matches_dict, reference_matrix_file, k, delta,
 
             # Right
             diff_right = current_score_right - tmp_score_right
-            while (diff_right > -delta) and (current_pos_right_ref > 0) and (current_pos_right_query > 0):
+            while (diff_right > -delta) and (current_pos_right_ref < ref_length -1 ) and (current_pos_right_query < len(query) - 1):
                 current_pos_right_ref += 1
                 current_pos_right_query += 1
 
@@ -96,6 +97,8 @@ def ungapped_extension(query, matches_dict, reference_matrix_file, k, delta,
                 diff_right = current_score_right - tmp_score_right
 
             # Store results
-            ungapped_extensions[(tmp_pos_left_query, tmp_pos_right_query)] = [(tmp_pos_left_ref, tmp_pos_right_ref), tmp_score_left + tmp_score_right]
+            if (tmp_pos_left_query, tmp_pos_right_query) not in ungapped_extensions:
+                ungapped_extensions[(tmp_pos_left_query, tmp_pos_right_query)] = []
+            ungapped_extensions[(tmp_pos_left_query, tmp_pos_right_query)].append([(tmp_pos_left_ref, tmp_pos_right_ref), tmp_score_left + tmp_score_right])
 
     return ungapped_extensions

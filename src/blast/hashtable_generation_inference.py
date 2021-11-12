@@ -32,7 +32,7 @@ def consensus_seq_method(reference_matrix, k=11):
     return table
 
 
-def hashtable_generation(reference_matrix_file, method, k, output_path):
+def hashtable_generation(reference_matrix_file, method, k, output_path=""):
     """
     generate and store seed table for blast
     :param reference_matrix_file: reference matrix file
@@ -49,7 +49,7 @@ def hashtable_generation(reference_matrix_file, method, k, output_path):
         'hashtable': table,
         'k': k
     }
-    pickle.dump(table_data, open(output_path, 'wb'))
+    if output_path != "": pickle.dump(table_data, open(output_path, 'wb'))
     return table_data
 
 
