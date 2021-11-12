@@ -21,7 +21,7 @@ def sum_proba_score(ref_letter_prob, query_letter_one_hot, mismatch_score=1,
 
 
 def ungapped_extension(query, matches_dict, reference_matrix_file, k, delta,
-                       mismatch_score=1, score_method, substitution=dict()):
+                       score_method,mismatch_score=1, substitution=dict()):
     """
     compute ungapped extension
     generates ungapped extended matches and corresponding HSP scores
