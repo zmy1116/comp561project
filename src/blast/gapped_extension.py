@@ -1,4 +1,7 @@
 from src.blast import ungapped_extension
+import pickle
+import numpy as np
+from src.utils.utils import sequence_one_hot
 
 def gapped_alignment(query, reference, pos_q, pos_r, score_method, substitution,
                      gap_penalty, gap_bias = 0, reverse = False):
@@ -22,6 +25,7 @@ def gapped_alignment(query, reference, pos_q, pos_r, score_method, substitution,
     #Subset the query and reference matrix to get the parts to align
     #To reduce time, the length subsetted to the ref matrix is max 3 times the length of the sequence subset
     max_length = len(query)*3
+    
         
     if reverse :
         s_query = query[:pos_q]
@@ -30,6 +34,7 @@ def gapped_alignment(query, reference, pos_q, pos_r, score_method, substitution,
         # Read the string and matrix backwards
         s_query = s_query[::-1]
         s_reference_matrix = np.flipud(s_reference_matrix)
+
         
     else :
         s_query = query[(pos_q+1):]
@@ -43,6 +48,8 @@ def gapped_alignment(query, reference, pos_q, pos_r, score_method, substitution,
     pM = np.zeros((len(s_query)+1, len(s_reference_matrix)+1))
     pX = np.zeros((len(s_query)+1, len(s_reference_matrix)+1))
     pY = np.zeros((len(s_query)+1, len(s_reference_matrix)+1))
+    
+    print(pY.shape)
     
     # Initialization
     sM[:,0] = - np.infty
@@ -204,6 +211,7 @@ def gapped_extension(query, reference, ungapped_dict, score_method, substitution
             gapped_extensions[(pos_l, pos_r)] = [new_query_string, new_ref_string, new_score]
     return gapped_extensions
 
+# %%
 
 if __name__ == "main":
     '''

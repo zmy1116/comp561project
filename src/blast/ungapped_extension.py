@@ -1,5 +1,6 @@
 from src.utils.utils import sequence_one_hot
 from src.utils.registry import Registry
+import pickle
 
 UNGAPPED_SCORE_ALGORITHM = Registry()
 
