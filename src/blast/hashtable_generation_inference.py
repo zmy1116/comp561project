@@ -60,7 +60,6 @@ def consensus_seq_match(table_data, query):
     :param query: query sequence of letters (ACGT)
     :return: list of dictionary with key query_start_idx,  reference_start_idx, match_score
     """
-    print(table_data.keys())
     hashtable = table_data['hashtable']
     k = table_data['k']
     results = []

@@ -2,38 +2,34 @@ import pickle
 import numpy as np
 
 
-def generate_queries(reference_matrix, query_length, type='all_positions', num=1, with_substitution=False,
+def generate_queries(reference_matrix, query_length, query_positions, num=1, with_substitution=False,
                      characters="ACGT"):
     """
     generate testing sequences according to ref seq probabilities
     :param reference_matrix: matrix storing the proba of each letter at each
     position in ref sequence
     :param query_length: desired length of the query sequence
-    :param type: generation type (all_positions: for every position generate queries, random: choose a random position)
+    :param query_positions: starting position of the query, if it is a list => it's the list of query positions, if it's 0 => a randomly generated position, other number => all positions
     :param num: number of queries generated for each position
     :param with_substitution: whether perform extra substitutions
     :param characters: ordered list of characters, same order as in reference matrix
-    :output: a query sequence generated according to the probabilities of the
-    reference sequence, no extra substitution or indel yet
+    :output: list of dictionary {label position, query string}, no extra substitution or indel yet
     """
-    assert type in ['all_positions', 'random']
-
     ref_length, nb_chars = reference_matrix.shape
     # define the choices of query positions
     query_position_ranges = np.arange(0, ref_length - query_length)
 
     # select list of labels: all positions or just a random position
-    if type == 'all_position':
-        # iterate through all positions
-        query_positions = query_position_ranges
-    else:
-        # choose a random position
-        query_positions = [np.random.choice(query_position_ranges)]
+    if type(query_positions) != list:
+
+        if query_positions == 0:
+            query_positions = [np.random.choice(query_position_ranges)]
+        else:
+            query_positions = list(query_position_ranges)
 
     # for each query position, generate #num queries
-    queries_data = {}
+    queries_data = []
     for label in query_positions:
-        queries = []
         for _ in range(num):
             query = ''
             for k in range(query_length):
@@ -45,10 +41,14 @@ def generate_queries(reference_matrix, query_length, type='all_positions', num=1
             # if with_substitution:
             #     query = add_substitutions(query, substitutions_probas=0, non_substitution_proba=0.9,
             #                               characters=characters)
-            queries.append(query)
-        queries_data[label] = queries
-
+            queries_data.append(
+                {
+                    'pos': label,
+                    'query': query
+                }
+            )
     return queries_data
+
 
 
 def add_substitutions(query, substitutions_probas=0, non_substitution_proba=0.9, characters="ACGT"):

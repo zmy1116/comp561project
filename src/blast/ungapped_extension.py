@@ -1,8 +1,10 @@
 from src.utils.utils import sequence_one_hot
 from src.utils.registry import Registry
 import pickle
+import numpy as np
 
 UNGAPPED_SCORE_ALGORITHM = Registry()
+
 
 @UNGAPPED_SCORE_ALGORITHM.register('sum_proba_score')
 def sum_proba_score(ref_letter_prob, query_letter_one_hot, mismatch_score=1,
@@ -14,14 +16,14 @@ def sum_proba_score(ref_letter_prob, query_letter_one_hot, mismatch_score=1,
     :param substitution: dict storing cost of replacing one letter with another
     :output: score of matching query_letter_one_hot at position corresponding to ref_letter_prob
     """
-    score = 0
-    for i, p in enumerate(ref_letter_prob):
-        score += p * query_letter_one_hot[i] - mismatch_score *p * (query_letter_one_hot[i] != 1)
+    score = np.sum(
+        ref_letter_prob * query_letter_one_hot - mismatch_score * ref_letter_prob * (1 - query_letter_one_hot))
+
     return score
 
 
 def ungapped_extension(query, matches_dict, reference_matrix_file, k, delta,
-                       score_method,mismatch_score=1, substitution=dict()):
+                       score_method, mismatch_score=1, substitution=dict()):
     """
     compute ungapped extension
     generates ungapped extended matches and corresponding HSP scores
@@ -65,13 +67,14 @@ def ungapped_extension(query, matches_dict, reference_matrix_file, k, delta,
 
             # Left
             diff_left = current_score_left - tmp_score_left
-            while (diff_left > -delta) and (current_pos_left_ref > 1) and (current_pos_left_query > 1):
+            while (diff_left > -delta) and (current_pos_left_ref > 0) and (current_pos_left_query > 0):
                 current_pos_left_ref -= 1
                 current_pos_left_query -= 1
 
                 probas_ref = reference_matrix[current_pos_left_ref]
                 letter_query = query_one_hot[current_pos_left_query]
-                current_score_left += UNGAPPED_SCORE_ALGORITHM[score_method](probas_ref, letter_query, substitution)
+                current_score_left += UNGAPPED_SCORE_ALGORITHM[score_method](probas_ref, letter_query, mismatch_score,
+                                                                             substitution)
 
                 if current_score_left > tmp_score_left:
                     tmp_score_left = current_score_left
@@ -82,14 +85,15 @@ def ungapped_extension(query, matches_dict, reference_matrix_file, k, delta,
 
             # Right
             diff_right = current_score_right - tmp_score_right
-            while (diff_right > -delta) and (current_pos_right_ref < ref_length -1 ) and (current_pos_right_query < len(query) - 1):
+            while (diff_right > -delta) and (current_pos_right_ref < ref_length) and (
+                    current_pos_right_query < len(query) - 1):
                 current_pos_right_ref += 1
                 current_pos_right_query += 1
 
                 probas_ref = reference_matrix[current_pos_right_ref]
                 letter_query = query_one_hot[current_pos_right_query]
 
-                current_score_right += UNGAPPED_SCORE_ALGORITHM[score_method](probas_ref, letter_query, substitution)
+                current_score_right += UNGAPPED_SCORE_ALGORITHM[score_method](probas_ref, letter_query, mismatch_score, substitution)
 
                 if current_score_right > tmp_score_right:
                     tmp_score_right = current_score_right
@@ -101,6 +105,7 @@ def ungapped_extension(query, matches_dict, reference_matrix_file, k, delta,
             # Store results
             if (tmp_pos_left_query, tmp_pos_right_query) not in ungapped_extensions:
                 ungapped_extensions[(tmp_pos_left_query, tmp_pos_right_query)] = []
-            ungapped_extensions[(tmp_pos_left_query, tmp_pos_right_query)].append([(tmp_pos_left_ref, tmp_pos_right_ref), tmp_score_left + tmp_score_right])
+            ungapped_extensions[(tmp_pos_left_query, tmp_pos_right_query)].append(
+                [(tmp_pos_left_ref, tmp_pos_right_ref), tmp_score_left + tmp_score_right])
 
     return ungapped_extensions
