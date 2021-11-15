@@ -85,7 +85,7 @@ def ungapped_extension(query, matches_dict, reference_matrix_file, k, delta,
 
             # Right
             diff_right = current_score_right - tmp_score_right
-            while (diff_right > -delta) and (current_pos_right_ref < ref_length) and (
+            while (diff_right > -delta) and (current_pos_right_ref < ref_length - 1) and (
                     current_pos_right_query < len(query) - 1):
                 current_pos_right_ref += 1
                 current_pos_right_query += 1
