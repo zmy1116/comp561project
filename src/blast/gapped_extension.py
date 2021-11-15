@@ -205,12 +205,24 @@ def gapped_extension(query, reference, ungapped_dict, score_method,
         print(pos_left_q, pos_right_q)
         
         for pos_ref, score in ungapped_dict[extension]:
-            # Extend to the left
-            (string_ql, string_rl, pos_l, score_l) = gapped_alignment(query, reference, pos_left_q, pos_ref[0], score_method, substitution_dict, mismatch_score, gap_penalty, reverse = True)
-                
-            # Extend to the right
-            (string_qr, string_rr, pos_r, score_r) = gapped_alignment(query, reference, pos_right_q, pos_ref[1], score_method, substitution_dict, mismatch_score, gap_penalty)
-                
+            # Extend to the left (only if there is something to extend)
+            if pos_left_q > 0:
+                (string_ql, string_rl, pos_l, score_l) = gapped_alignment(query, reference, pos_left_q, pos_ref[0], score_method, substitution_dict, mismatch_score, gap_penalty, reverse = True)
+            else:
+                string_ql = ""
+                string_rl = ""
+                pos_l = pos_ref[0]
+                score_l = 0
+            
+            # Extend to the right  (only if there is something to extend)
+            if pos_right_q < (len(query)-1):
+                (string_qr, string_rr, pos_r, score_r) = gapped_alignment(query, reference, pos_right_q, pos_ref[1], score_method, substitution_dict, mismatch_score, gap_penalty)
+            else:
+                string_qr = ""
+                string_rr = ""
+                pos_r = pos_ref[1]
+                score_l = 0
+            
             new_score = score + score_l + score_r
             new_query_string = string_ql + query[pos_left_q:(pos_right_q+1)] + string_qr
             #TODO write a method to get the consensus sequence
@@ -219,9 +231,9 @@ def gapped_extension(query, reference, ungapped_dict, score_method,
     return gapped_extensions
 
 # %%
-
+'''
 if __name__ == "main":
-    '''
+
     def to_matrix(ref):
         mat = np.array([[0,0,0,0]])
         for i in ref:
@@ -238,5 +250,6 @@ if __name__ == "main":
     query = "AACTAATTTCCCGGGGATGAC"
     reference = "AAAACTAATTTCCCGTCGGAGGACTGC"
     reference_matrix = to_matrix(reference)
-    '''
+    
     gapped_alignment(query, reference, 15, 17, 'sum_proba_score', dict(), -1, gap_bias = 0, reverse = True)
+    '''
