@@ -3,7 +3,7 @@ import numpy as np
 
 
 def generate_queries(reference_matrix, query_length, query_positions, num=1,
-                     with_substitution=False, characters="ACGT"):
+                     with_substitution=False, with_indel=False, characters="ACGT"):
     """
     generate testing sequences according to ref seq probabilities
     :param reference_matrix: matrix storing the proba of each letter at each
@@ -43,6 +43,9 @@ def generate_queries(reference_matrix, query_length, query_positions, num=1,
             print(s1)
             print(s1==query)
             # TODO ADD INDEL
+            # if with_indel:
+                # query = add_indel()
+
             queries_data.append(
                 {
                     'pos': label,
