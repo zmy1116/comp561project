@@ -3,7 +3,7 @@ import src.blast.ungapped_extension as ungapped
 import src.blast.gapped_extension as gapped
 # %%
 def blast(reference_matrix_file, query, gap_penalty=-1, gap_bias=-2,
-          hashtable_method='consensus_seed_seq',
+          hashtable_method='consensus_seed_seq', mismatch_score=1,
           k=11, delta=0.1, score_method='sum_proba_score', substitution=dict(),
           output_path=""):
 
@@ -18,6 +18,7 @@ def blast(reference_matrix_file, query, gap_penalty=-1, gap_bias=-2,
     ungapped_extensions = ungapped.ungapped_extension(query, matches_dict,
                                                       reference_matrix_file, k,
                                                       delta, score_method,
+                                                      mismatch_score,
                                                       substitution)
 
     print(3)
@@ -25,6 +26,7 @@ def blast(reference_matrix_file, query, gap_penalty=-1, gap_bias=-2,
     gapped_extensions = gapped.gapped_extension(query, reference_matrix_file,
                                                 ungapped_extensions,
                                                 score_method, substitution,
+                                                mismatch_score,
                                                 gap_penalty, gap_bias)
     print(4)
     return gapped_extensions
