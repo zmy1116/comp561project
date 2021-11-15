@@ -2,8 +2,8 @@ import pickle
 import numpy as np
 
 
-def generate_queries(reference_matrix, query_length, query_positions, num=1, with_substitution=False,
-                     characters="ACGT"):
+def generate_queries(reference_matrix, query_length, query_positions, num=1,
+                     with_substitution=False, characters="ACGT"):
     """
     generate testing sequences according to ref seq probabilities
     :param reference_matrix: matrix storing the proba of each letter at each
@@ -37,10 +37,12 @@ def generate_queries(reference_matrix, query_length, query_positions, num=1, wit
                 char_index = np.random.choice(np.arange(nb_chars), p=probas)
                 query += characters[char_index]
 
-            # TODO ADD SUBSTITUTION AND GAP
-            # if with_substitution:
-            #     query = add_substitutions(query, substitutions_probas=0, non_substitution_proba=0.9,
-            #                               characters=characters)
+            if with_substitution:
+                query = add_substitutions(query, substitutions_probas=substitutions_probas,
+                non_substitution_proba=0.9, characters=characters)
+            print(s1)
+            print(s1==query)
+            # TODO ADD INDEL
             queries_data.append(
                 {
                     'pos': label,
@@ -50,8 +52,26 @@ def generate_queries(reference_matrix, query_length, query_positions, num=1, wit
     return queries_data
 
 
+# %% Substitutions probabilities
+# Transitions are more likely than transversions
 
-def add_substitutions(query, substitutions_probas=0, non_substitution_proba=0.9, characters="ACGT"):
+nucleotides = "ACGT"
+non_substitution_proba = 0.9
+substitutions_probas = dict()
+purines = {"A", "G"}
+pyrimidines = {"T", "C"}
+
+for nt1 in nucleotides:
+    for nt2 in nucleotides:
+        if nt1 == nt2: substitutions_probas[(nt1, nt2)] = non_substitution_proba
+        elif (nt1 in purines and nt2 in purines) or (nt1 in pyrimidines and nt2 in pyrimidines):
+            substitutions_probas[(nt1, nt2)] = (1 - non_substitution_proba) / 2
+        else: substitutions_probas[(nt1, nt2)] = (1 - non_substitution_proba) / 4
+
+
+
+# %%
+def add_substitutions(query, substitutions_probas=substitutions_probas, non_substitution_proba=0.9, characters="ACGT"):
     """
     Starting from a query sequence, add substitutions to it
     :param query: query sequence to modify
