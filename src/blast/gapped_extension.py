@@ -21,7 +21,8 @@ def gapped_alignment(query, reference, pos_q, pos_r, score_method, substitution,
     
     :return: alignment strings, the position on the reference, and the score
     """
-    reference_matrix = pickle.load(open(reference, 'rb'))
+    # reference_matrix = pickle.load(open(reference, 'rb'))
+    reference_matrix = reference
     #Subset the query and reference matrix to get the parts to align
     #To reduce time, the length subsetted to the ref matrix is max 3 times the length of the sequence subset
     max_length = len(query)*3
@@ -49,8 +50,6 @@ def gapped_alignment(query, reference, pos_q, pos_r, score_method, substitution,
     pX = np.zeros((len(s_query)+1, len(s_reference_matrix)+1))
     pY = np.zeros((len(s_query)+1, len(s_reference_matrix)+1))
     
-    print(pY.shape)
-    
     # Initialization
     sM[:,0] = - np.infty
     sM[0,:] = - np.infty
@@ -63,25 +62,37 @@ def gapped_alignment(query, reference, pos_q, pos_r, score_method, substitution,
     pY[:,0] = 2 #'Y'
     pY[1,0] = pX[0,1] = 3 #'M'
     
+
     # Filling the matrices
     for i in range(1, len(s_query)+1):
         for j in range(1, len(s_reference_matrix)+1):
             probas_ref = s_reference_matrix[j-1]
             letter_query = s_query_one_hot[i-1]
-            sub_score = ungapped_extension.UNGAPPED_SCORE_ALGORITHM[score_method](probas_ref, letter_query, mismatch_score, substitution)
+            sub_score = ungapped_extension.UNGAPPED_SCORE_ALGORITHM[score_method](probas_ref, 
+                                                                                  letter_query,
+                                                                                  mismatch_score,
+                                                                                  substitution)
+            # First M
             M1 = sM[i-1, j-1] + sub_score
             X1 = sX[i-1, j-1] + sub_score
             Y1 = sY[i-1, j-1] + sub_score
             sM[i,j] = np.max([M1, X1, Y1])
             pM[i,j] = [3,1,2][np.argmax([M1, X1, Y1])]
-            M2 = sM[i-1, j] + gap_bias + gap_penalty
-            X2 = sX[i-1, j] + gap_penalty
-            sX[i,j] = np.max([M2, X2])
-            pX[i,j] = [3,1][np.argmax([M2, X2])]
-            M3 = sM[i, j-1] + gap_bias + gap_penalty
-            Y3 = sX[i, j-1] + gap_penalty
-            sY[i,j] = np.max([M3, Y3])
-            pY[i,j] = [3,2][np.argmax([M3, Y3])]
+            
+            # Now X
+            M2 = sM[i, j-1] + gap_bias + gap_penalty
+            X2 = sX[i, j-1] + gap_penalty
+            Y2 = sY[i, j-1] + gap_bias + gap_penalty
+            sX[i,j] = np.max([M2, X2, Y2])
+            pX[i,j] = [3,1,2][np.argmax([M2, X2, Y2])]
+            
+            # Finally Y
+            M3 = sM[i-1, j] + gap_bias + gap_penalty
+            X3 = sX[i-1, j] + gap_bias + gap_penalty
+            Y3 = sX[i-1, j] + gap_penalty
+            sY[i,j] = np.max([M3, X3, Y3])
+            pY[i,j] = [3,1,2][np.argmax([M3, X3, Y3])]
+
     '''
             score_l = scores_mat[i-1,j] + gap_penalty # score from the left
             score_a = scores_mat[i,j-1] + gap_penalty # score from above
@@ -102,9 +113,10 @@ def gapped_alignment(query, reference, pos_q, pos_r, score_method, substitution,
     
     #If we have gaps at the end of the query, we ignore them and take the best score after the gaps
     x = l
-    while pX[k,x] == 1:
-        x =- 1
+    #while pX[k,x] == 1:
+    #    x =- 1
     max_score = np.max([sX[k,x], sY[k,l], sM[k,l]])
+
     if sX[k,x] == max_score:
         l = x
         origin = pX[k,l]
@@ -117,7 +129,59 @@ def gapped_alignment(query, reference, pos_q, pos_r, score_method, substitution,
     string_query = ""
     string_reference = ""
     
+    Z = "AXYM"
+    path1 = [Z[int(origin)]]
     while (k > 0) | (l > 0):
+        if origin == 2:
+            origin = pY[(k, l)]
+            k -= 1
+        elif origin == 1:
+            origin = pY[(k, l)]
+            l -= 1
+        elif origin == 3:
+            origin = pM[(k, l)]
+            l -= 1
+            k -= 1
+        if (k > 0) | (l > 0):
+            path1.append(Z[int(origin)])
+    
+    # TODO optimize this and address case reverse = True
+    path1 = path1[::-1]
+    print(path1)
+    string_query1 = ""
+    string_reference1 = ""
+    string_query = ""
+    string_ref = ""
+    
+    if reverse:
+        # TODO
+        print(0)
+    else:
+        query_idx = pos_q + 1
+        ref_idx = pos_r + 1
+        
+        for step in path1:
+            print(string_query1)
+            print(query_idx)
+            print(ref_idx)
+            if step == "X":
+                string_reference1 += "ACGT"[np.argmax(s_reference_matrix[ref_idx])]
+                string_query1 += "-"
+                ref_idx += 1
+            elif step == "Y":
+                string_reference1 += "-"
+                string_query1 += query[query_idx]
+                query_idx += 1
+            else:
+                string_reference1 += "ACGT"[np.argmax(s_reference_matrix[l-1])]
+                string_query1 += query[query_idx]
+                ref_idx += 1
+                query_idx += 1
+    
+    """
+    while (k > 0) | (l > 0):
+        path.append(Z[int(origin)])
+        count += 1
         if origin == 1: # From the left
             string_query = "-" + string_query
             letter = "ACGT"[np.argmax(s_reference_matrix[l-1])]
@@ -136,7 +200,7 @@ def gapped_alignment(query, reference, pos_q, pos_r, score_method, substitution,
             l -= 1
             k -= 1
             origin = pM[k,l]
-        
+    """
     '''
     # We don't care about the gaps at the end of the query, so we loop until we have none
     while trace_mat[k,l] == 0:
@@ -166,6 +230,7 @@ def gapped_alignment(query, reference, pos_q, pos_r, score_method, substitution,
             l -= 1
             k -= 1
     '''
+    
     # Reverting if necessary
     if reverse:
         final_ref_position = pos_r - alignment_length
@@ -173,7 +238,7 @@ def gapped_alignment(query, reference, pos_q, pos_r, score_method, substitution,
         string_reference = string_reference[::-1]
     else:
         final_ref_position = pos_r + alignment_length    
-    return(string_query, string_reference, final_ref_position, final_score)
+    return(string_query1, string_reference1, final_ref_position)
 
 
 def gapped_extension(query, reference, ungapped_dict, score_method,
@@ -193,9 +258,6 @@ def gapped_extension(query, reference, ungapped_dict, score_method,
     :return: gapped_extensions dict (positions, scores and strings)
     """
     gapped_extensions = dict()
-    #
-    COUNT = 0
-    #
     
     for extension in ungapped_dict:
         # (tmp_pos_left_query, tmp_pos_right_query)] = [(tmp_pos_left_ref, tmp_pos_right_ref), tmp_score_left + tmp_score_right
@@ -253,3 +315,22 @@ if __name__ == "main":
     
     gapped_alignment(query, reference, 15, 17, 'sum_proba_score', dict(), -1, gap_bias = 0, reverse = True)
     '''
+# %%
+
+query = "AAT"
+ref = "AAA"
+
+reference = np.zeros((3, 4))
+reference[(0,0)] = 1
+reference[(1,0)] = 1
+reference[(2,0)] = 1
+
+
+mismatch_score = 5
+
+"""
+expect: AAT VS AA-A ou AA-T VS AAA
+"""
+
+gapped_alignment(query, reference, -1, -1, 'sum_proba_score', substitution=0,
+                     mismatch_score=mismatch_score, gap_penalty=-1, gap_bias = 0, reverse = False)
