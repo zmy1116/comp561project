@@ -2,6 +2,7 @@ import numpy as np
 import pickle
 from src.utils.utils import seq2num
 from src.utils.registry import Registry
+from src.utils.utils import generate_sequence
 
 HASHTABLE_SEEDING_ALGORITHM = Registry()
 HASHTABLE_MATCHING_ALGORITHM = Registry()
@@ -28,6 +29,50 @@ def consensus_seq_method(reference_matrix, k=11):
             table[seed].append(idx)
         else:
             table[seed] = [idx]
+
+    return table
+
+
+
+@HASHTABLE_SEEDING_ALGORITHM.register('individual_nt_threshold')
+def individual_nt_threshold(reference_matrix, k=11, threshold=0.15,
+                            characters="ACGT"):
+    """
+    method 1
+    take the most likely sequence out of reference matrix, and directly building seed table
+
+    :param reference_matrix: reference probability matrix
+    :param k:  seed size
+    :param threshold:  min proba to take into account a nucleotide
+    :return:  seed table
+    """
+    N = reference_matrix.shape[0]
+
+    table = {}
+
+    above_threshold = dict()
+
+    for idx in range(N):
+        line_above_threshold = list(np.where(reference_matrix[idx] >= threshold)[0])
+        above_threshold[idx] = line_above_threshold
+
+    current_seeds = set()
+    generate_sequence(above_threshold, k, current_seeds,
+                      "", characters="ACGT")
+
+    for seed in current_seeds: table[seed] = [0]
+
+    for idx in range(1, N-k+1):
+        new_current_seeds = {seed[1:] for seed in current_seeds}
+        current_seeds = set()
+        for char_idx in above_threshold[idx + k - 1]:
+            current_seeds = current_seeds.union({s + characters[char_idx]
+                                                 for s in new_current_seeds})
+        for seed in current_seeds:
+            if seed in table:
+                table[seed].append(idx)
+            else:
+                table[seed] = [idx]
 
     return table
 
@@ -75,5 +120,3 @@ def consensus_seq_match(table_data, query):
                 }
             )
     return results
-
-
