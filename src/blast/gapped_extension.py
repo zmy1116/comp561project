@@ -35,12 +35,10 @@ def gapped_alignment(query, reference, pos_q, pos_r, score_method, substitution,
         # Read the string and matrix backwards
         s_query = s_query[::-1]
         s_reference_matrix = np.flipud(s_reference_matrix)
-
-        
     else :
-        s_query = query[(pos_q+1):]
+        s_query = query[pos_q:]
         end = np.min([pos_r+max_length, len(reference_matrix)])
-        s_reference_matrix = reference_matrix[(pos_r+1):end]
+        s_reference_matrix = reference_matrix[pos_r:end]
         
     s_query_one_hot = sequence_one_hot(s_query)
     sM = np.zeros((len(s_query)+1, len(s_reference_matrix)+1))
@@ -62,7 +60,7 @@ def gapped_alignment(query, reference, pos_q, pos_r, score_method, substitution,
     pY[:,0] = 2 #'Y'
     pY[1,0] = pX[0,1] = 3 #'M'
     
-
+    
     # Filling the matrices
     for i in range(1, len(s_query)+1):
         for j in range(1, len(s_reference_matrix)+1):
@@ -92,33 +90,16 @@ def gapped_alignment(query, reference, pos_q, pos_r, score_method, substitution,
             Y3 = sX[i-1, j] + gap_penalty
             sY[i,j] = np.max([M3, X3, Y3])
             pY[i,j] = [3,1,2][np.argmax([M3, X3, Y3])]
-
-    '''
-            score_l = scores_mat[i-1,j] + gap_penalty # score from the left
-            score_a = scores_mat[i,j-1] + gap_penalty # score from above
-            
-            # score from the diagonal
-            probas_ref = s_reference_matrix[j]
-            letter_query = s_query_one_hot[i]
-            score_d = scores_mat[i-1,j-1] + UNGAPPED_SCORE_ALGORITHM[score_method](probas_ref, letter_query, substitution)
-            
-            scores_mat[i,j] = np.max([score_l, score_a, score_d])
-            trace_mat[i,j] = np.argmax([score_l, score_a, score_d])
-    '''
+    
     
     # Traceback
     # Starting from the bottom right...
     k = len(s_query)
     l = len(s_reference_matrix)
     
-    #If we have gaps at the end of the query, we ignore them and take the best score after the gaps
-    x = l
-    #while pX[k,x] == 1:
-    #    x =- 1
-    max_score = np.max([sX[k,x], sY[k,l], sM[k,l]])
-
-    if sX[k,x] == max_score:
-        l = x
+    max_score = np.max([sX[k,l], sY[k,l], sM[k,l]])
+    
+    if sX[k,l] == max_score:
         origin = pX[k,l]
     elif sY[k,l] == max_score:
         origin = pY[k,l]
@@ -136,7 +117,7 @@ def gapped_alignment(query, reference, pos_q, pos_r, score_method, substitution,
             origin = pY[(k, l)]
             k -= 1
         elif origin == 1:
-            origin = pY[(k, l)]
+            origin = pX[(k, l)]
             l -= 1
         elif origin == 3:
             origin = pM[(k, l)]
@@ -150,95 +131,52 @@ def gapped_alignment(query, reference, pos_q, pos_r, score_method, substitution,
     print(path1)
     string_query1 = ""
     string_reference1 = ""
-    string_query = ""
-    string_ref = ""
+    query_idx = 0
+    ref_idx = 0
     
-    if reverse:
-        # TODO
-        print(0)
+    
+    for step in path1:
+        print(string_query1)
+        print(query_idx)
+        print(ref_idx)
+        if step == "X":
+            string_reference1 += "ACGT"[np.argmax(s_reference_matrix[ref_idx])]
+            string_query1 += "-"
+            ref_idx += 1
+        elif step == "Y":
+            string_reference1 += "-"
+            string_query1 += query[query_idx]
+            query_idx += 1
+        else:
+            string_reference1 += "ACGT"[np.argmax(s_reference_matrix[l-1])]
+            string_query1 += query[query_idx]
+            ref_idx += 1
+            query_idx += 1
+    
+    #If there are gaps at the end of the query, we remove them
+    to_remove = 0
+    end = len(string_query1)-to_remove
+    start = len(string_query1)-to_remove-1
+    while string_query1[start:end] == "-":
+        to_remove += 1
+        end = len(string_query1)-to_remove
+        start = len(string_query1)-to_remove-1
+    string_reference1 = string_reference1[0:(len(string_reference1) - to_remove)]
+    string_query1 = string_query1[0:(len(string_query1) - to_remove)]
+    ref_idx -= to_remove
+    if to_remove > 0:
+        max_score = max_score - gap_bias - gap_penalty*to_remove
+    
+    
+    if reverse:        
+        final_idx = ref_idx - pos_r
+        string_reference1 = string_reference1[::-1]
+        string_query1 = string_query1[::-1]
     else:
-        query_idx = pos_q + 1
-        ref_idx = pos_r + 1
-        
-        for step in path1:
-            print(string_query1)
-            print(query_idx)
-            print(ref_idx)
-            if step == "X":
-                string_reference1 += "ACGT"[np.argmax(s_reference_matrix[ref_idx])]
-                string_query1 += "-"
-                ref_idx += 1
-            elif step == "Y":
-                string_reference1 += "-"
-                string_query1 += query[query_idx]
-                query_idx += 1
-            else:
-                string_reference1 += "ACGT"[np.argmax(s_reference_matrix[l-1])]
-                string_query1 += query[query_idx]
-                ref_idx += 1
-                query_idx += 1
+        final_idx = ref_idx + pos_r
     
-    """
-    while (k > 0) | (l > 0):
-        path.append(Z[int(origin)])
-        count += 1
-        if origin == 1: # From the left
-            string_query = "-" + string_query
-            letter = "ACGT"[np.argmax(s_reference_matrix[l-1])]
-            string_reference = letter + string_reference
-            l -= 1
-            origin = pX[k,l]
-        elif origin == 2: # From above
-            string_query = s_query[k-1] + string_query
-            string_reference = "-" + string_reference
-            k -= 1
-            origin = pY[k,l]
-        else : # From the diagonal
-            string_query = s_query[k-1] + string_query
-            letter = "ACGT"[np.argmax(s_reference_matrix[l-1])]
-            string_reference = letter + string_reference
-            l -= 1
-            k -= 1
-            origin = pM[k,l]
-    """
-    '''
-    # We don't care about the gaps at the end of the query, so we loop until we have none
-    while trace_mat[k,l] == 0:
-        l -= 1
     
-    final_score = scores_mat[k,l]
-    string_query = ""
-    string_reference = ""
-    # Until we reach the top left, trace back and record the alignment
-    while (k > 0) | (l > 0):
-        # If we come from the left, add a gap to the reference
-        if trace_mat[k,l] == 0:
-            string_query = s_query[k] + string_query
-            string_reference = "-" + string_reference
-            l -= 1
-        # If we come from above, add a gap to the query
-        elif trace_mat[k,l] == 1:
-            string_query = "-" + string_query
-            letter = "ACGT"[np.argmax(s_reference_matrix[l])]
-            string_reference = letter + string_reference
-            k -= 1
-        # If we come from the diagonal, add a the letters to the reference
-        else :
-            string_query = s_query[k] + string_query
-            letter = "ACGT"[np.argmax(s_reference_matrix[l])]
-            string_reference = letter + string_reference
-            l -= 1
-            k -= 1
-    '''
-    
-    # Reverting if necessary
-    if reverse:
-        final_ref_position = pos_r - alignment_length
-        string_query = string_query[::-1]
-        string_reference = string_reference[::-1]
-    else:
-        final_ref_position = pos_r + alignment_length    
-    return(string_query1, string_reference1, final_ref_position)
+    return(string_query1, string_reference1, final_idx, max_score)
 
 
 def gapped_extension(query, reference, ungapped_dict, score_method,
