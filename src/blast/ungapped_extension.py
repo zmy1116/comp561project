@@ -16,6 +16,7 @@ def sum_proba_score(ref_letter_prob, query_letter_one_hot, mismatch_score=1,
     :param substitution: dict storing cost of replacing one letter with another
     :output: score of matching query_letter_one_hot at position corresponding to ref_letter_prob
     """
+
     score = np.sum(
         ref_letter_prob * query_letter_one_hot - mismatch_score * ref_letter_prob * (1 - query_letter_one_hot))
 
@@ -43,6 +44,7 @@ def ungapped_extension(query, matches_dict, reference_matrix_file, k, delta,
     ref_length, _ = reference_matrix.shape
 
     ungapped_extensions = dict()
+
 
     for matches in matches_dict:
         query_left = matches['query_idx']
@@ -73,8 +75,7 @@ def ungapped_extension(query, matches_dict, reference_matrix_file, k, delta,
 
                 probas_ref = reference_matrix[current_pos_left_ref]
                 letter_query = query_one_hot[current_pos_left_query]
-                current_score_left += UNGAPPED_SCORE_ALGORITHM[score_method](probas_ref, letter_query, mismatch_score,
-                                                                             substitution)
+                current_score_left += UNGAPPED_SCORE_ALGORITHM[score_method](probas_ref, letter_query, mismatch_score, substitution)
 
                 if current_score_left > tmp_score_left:
                     tmp_score_left = current_score_left
