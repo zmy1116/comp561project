@@ -21,8 +21,8 @@ def gapped_alignment(query, reference, pos_q, pos_r, score_method, substitution,
     
     :return: alignment strings, the position on the reference, and the score
     """
-    # reference_matrix = pickle.load(open(reference, 'rb'))
-    reference_matrix = reference
+    reference_matrix = pickle.load(open(reference, 'rb'))
+    #reference_matrix = reference
     #Subset the query and reference matrix to get the parts to align
     #To reduce time, the length subsetted to the ref matrix is max 3 times the length of the sequence subset
     max_length = len(query)*3
@@ -128,7 +128,7 @@ def gapped_alignment(query, reference, pos_q, pos_r, score_method, substitution,
     
     # TODO optimize this and address case reverse = True
     path1 = path1[::-1]
-    print(path1)
+    #print(path1)
     string_query1 = ""
     string_reference1 = ""
     query_idx = 0
@@ -136,20 +136,20 @@ def gapped_alignment(query, reference, pos_q, pos_r, score_method, substitution,
     
     
     for step in path1:
-        print(string_query1)
-        print(query_idx)
-        print(ref_idx)
+        #print(string_query1)
+        #print(query_idx)
+        #print(ref_idx)
         if step == "X":
             string_reference1 += "ACGT"[np.argmax(s_reference_matrix[ref_idx])]
             string_query1 += "-"
             ref_idx += 1
         elif step == "Y":
             string_reference1 += "-"
-            string_query1 += query[query_idx]
+            string_query1 += s_query[query_idx]
             query_idx += 1
         else:
             string_reference1 += "ACGT"[np.argmax(s_reference_matrix[l-1])]
-            string_query1 += query[query_idx]
+            string_query1 += s_query[query_idx]
             ref_idx += 1
             query_idx += 1
     
@@ -175,6 +175,7 @@ def gapped_alignment(query, reference, pos_q, pos_r, score_method, substitution,
     else:
         final_idx = ref_idx + pos_r
     
+    print(string_query1)
     
     return(string_query1, string_reference1, final_idx, max_score)
 
@@ -196,6 +197,7 @@ def gapped_extension(query, reference, ungapped_dict, score_method,
     :return: gapped_extensions dict (positions, scores and strings)
     """
     gapped_extensions = dict()
+    reference_matrix = pickle.load(open(reference, 'rb'))
     
     for extension in ungapped_dict:
         # (tmp_pos_left_query, tmp_pos_right_query)] = [(tmp_pos_left_ref, tmp_pos_right_ref), tmp_score_left + tmp_score_right
@@ -215,18 +217,18 @@ def gapped_extension(query, reference, ungapped_dict, score_method,
                 score_l = 0
             
             # Extend to the right  (only if there is something to extend)
-            if pos_right_q < (len(query)-1):
-                (string_qr, string_rr, pos_r, score_r) = gapped_alignment(query, reference, pos_right_q, pos_ref[1], score_method, substitution_dict, mismatch_score, gap_penalty)
+            if pos_right_q < (len(query)):
+                (string_qr, string_rr, pos_r, score_r) = gapped_alignment(query, reference, pos_right_q + 1, pos_ref[1] + 1, score_method, substitution_dict, mismatch_score, gap_penalty)
             else:
                 string_qr = ""
                 string_rr = ""
                 pos_r = pos_ref[1]
-                score_l = 0
+                score_r = 0
             
             new_score = score + score_l + score_r
             new_query_string = string_ql + query[pos_left_q:(pos_right_q+1)] + string_qr
             #TODO write a method to get the consensus sequence
-            new_ref_string = string_rl + "".join(["ACGT"[np.argmax(s_reference_matrix[k])] for k in range(pos_ref[0],(pos_ref[1]+1))]) + string_rr
+            new_ref_string = string_rl + "".join(["ACGT"[np.argmax(reference_matrix[k])] for k in range(pos_ref[0],(pos_ref[1]+1))]) + string_rr
             gapped_extensions[(pos_l, pos_r)] = [new_query_string, new_ref_string, new_score]
     return gapped_extensions
 
@@ -252,7 +254,6 @@ if __name__ == "main":
     reference_matrix = to_matrix(reference)
     
     gapped_alignment(query, reference, 15, 17, 'sum_proba_score', dict(), -1, gap_bias = 0, reverse = True)
-    '''
 # %%
 
 query = "AAT"
@@ -272,3 +273,4 @@ expect: AAT VS AA-A ou AA-T VS AAA
 
 gapped_alignment(query, reference, -1, -1, 'sum_proba_score', substitution=0,
                      mismatch_score=mismatch_score, gap_penalty=-1, gap_bias = 0, reverse = False)
+                     '''
