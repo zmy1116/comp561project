@@ -22,11 +22,13 @@ def gapped_alignment(query, reference, pos_q, pos_r, score_method, substitution,
     :return: alignment strings, the position on the reference, and the score
     """
     reference_matrix = pickle.load(open(reference, 'rb'))
-    #reference_matrix = reference
+    # reference_matrix = reference
     #Subset the query and reference matrix to get the parts to align
     #To reduce time, the length subsetted to the ref matrix is max 3 times the length of the sequence subset
     max_length = len(query)*3
     
+    if pos_q == 10 and pos_r==14068:
+        print(pos_q, pos_r, reverse)
         
     if reverse :
         s_query = query[:pos_q]
@@ -168,14 +170,14 @@ def gapped_alignment(query, reference, pos_q, pos_r, score_method, substitution,
         max_score = max_score - gap_bias - gap_penalty*to_remove
     
     
-    if reverse:        
-        final_idx = ref_idx - pos_r
+    if reverse:
+        final_idx = pos_r - ref_idx        
         string_reference1 = string_reference1[::-1]
         string_query1 = string_query1[::-1]
     else:
         final_idx = ref_idx + pos_r
     
-    print(string_query1)
+    # print(string_query1)
     
     return(string_query1, string_reference1, final_idx, max_score)
 
@@ -198,18 +200,18 @@ def gapped_extension(query, reference, ungapped_dict, score_method,
     """
     gapped_extensions = dict()
     reference_matrix = pickle.load(open(reference, 'rb'))
-    
+
     for extension in ungapped_dict:
         # (tmp_pos_left_query, tmp_pos_right_query)] = [(tmp_pos_left_ref, tmp_pos_right_ref), tmp_score_left + tmp_score_right
         pos_left_q = extension[0]
         pos_right_q = extension[1]
         
-        print(pos_left_q, pos_right_q)
+        # print(pos_left_q, pos_right_q)
         
         for pos_ref, score in ungapped_dict[extension]:
             # Extend to the left (only if there is something to extend)
             if pos_left_q > 0:
-                (string_ql, string_rl, pos_l, score_l) = gapped_alignment(query, reference, pos_left_q, pos_ref[0], score_method, substitution_dict, mismatch_score, gap_penalty, reverse = True)
+                (string_ql, string_rl, pos_l, score_l) = gapped_alignment(query, reference, pos_left_q, pos_ref[0], score_method, substitution_dict, mismatch_score, gap_penalty, gap_bias, reverse = True)
             else:
                 string_ql = ""
                 string_rl = ""
@@ -217,8 +219,8 @@ def gapped_extension(query, reference, ungapped_dict, score_method,
                 score_l = 0
             
             # Extend to the right  (only if there is something to extend)
-            if pos_right_q < (len(query)):
-                (string_qr, string_rr, pos_r, score_r) = gapped_alignment(query, reference, pos_right_q + 1, pos_ref[1] + 1, score_method, substitution_dict, mismatch_score, gap_penalty)
+            if pos_right_q < (len(query)-1):
+                (string_qr, string_rr, pos_r, score_r) = gapped_alignment(query, reference, pos_right_q + 1, pos_ref[1] + 1, score_method, substitution_dict, mismatch_score, gap_penalty, gap_bias)
             else:
                 string_qr = ""
                 string_rr = ""
@@ -230,6 +232,17 @@ def gapped_extension(query, reference, ungapped_dict, score_method,
             #TODO write a method to get the consensus sequence
             new_ref_string = string_rl + "".join(["ACGT"[np.argmax(reference_matrix[k])] for k in range(pos_ref[0],(pos_ref[1]+1))]) + string_rr
             gapped_extensions[(pos_l, pos_r)] = [new_query_string, new_ref_string, new_score]
+    
+            #
+            if (pos_l, pos_r) == (408851, 408868):
+                print("See your results")
+                print(extension)
+                print(pos_ref)
+                print(score_l)
+                print(score_r)
+                
+            #
+    
     return gapped_extensions
 
 # %%
