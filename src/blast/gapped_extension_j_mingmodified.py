@@ -156,10 +156,9 @@ def gapped_extension(query, reference, ungapped_dict, score_method,
         final_result = {
             'ref_left_idx': gapped_extension_result['ref_left_idx'],
             'ref_right_idx': gapped_extension_result['ref_right_idx'],
-
-
+            'score': gapped_extension_result['score']  + extension['ungapped_extension_result']['score'] + extension['seed_matching_result']['score']
         }
-
+        extension['final_result'] = final_result
 
         gapped_extensions.append(extension)
 
