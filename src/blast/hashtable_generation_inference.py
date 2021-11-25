@@ -113,10 +113,14 @@ def consensus_seq_match(table_data, query):
         query_seed = tuple(query[idx:idx+k])
         matches = hashtable.get(query_seed, [])
         if len(matches) > 0:
-            results.append(
-                {
-                    'query_idx': idx,
-                    'db_indices': matches
-                }
-            )
+            for db_index in matches:
+                results.append(
+                    {
+                        'query_idx': idx,
+                        'seed_matching_result': {
+                            'ref_idx': db_index,
+                            'score': 0 # for now score is set to 0
+                        }
+                    }
+                )
     return results

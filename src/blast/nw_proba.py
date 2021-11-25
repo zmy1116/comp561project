@@ -3,7 +3,6 @@ This file contains an implementation of the Needleman-Wunsch algorithm with
 affine gap penalty.
 """
 
-
 # %% Useful imports
 
 import numpy as np
@@ -25,17 +24,17 @@ def get_max_M(M, X, Y, i, j):
 
 def get_max_X(M, X, Y, i, j, gap_create, gap_extend):
     origins = {'X': X[(i, j)] + gap_extend,
-               'Y': Y[(i, j)] + gap_create,
-               'M': M[(i, j)] + gap_create}
+               'Y': Y[(i, j)] + gap_create + gap_extend,
+               'M': M[(i, j)] + gap_create + gap_extend}
     score = max(origins.values())
     res = [ind for ind in origins if origins[ind] == score]
     return (score, [res[0]])
 
 
 def get_max_Y(M, X, Y, i, j, gap_create, gap_extend):
-    origins = {'X': X[(i, j)] + gap_create,
+    origins = {'X': X[(i, j)] + gap_create + gap_extend,
                'Y': Y[(i, j)] + gap_extend,
-               'M': M[(i, j)] + gap_create}
+               'M': M[(i, j)] + gap_create + gap_extend}
     score = max(origins.values())
     res = [ind for ind in origins if origins[ind] == score]
     return (score, [res[0]])
@@ -58,14 +57,14 @@ def get_all_paths(lastConsidered, paths, draftPath, M_Previous, X_Previous,
         if lastConsidered[1] == 'X':
             draftPathBis = draftPath + ['X']
             for origin in X_Previous[(i, j)]:
-                lastCoords = (i, j-1)
+                lastCoords = (i, j - 1)
                 lastConsideredBis = (lastCoords, origin)
                 get_all_paths(lastConsideredBis, paths, draftPathBis,
                               M_Previous, X_Previous, Y_Previous)
         if lastConsidered[1] == 'Y':
             draftPathBis = draftPath + ['Y']
             for origin in Y_Previous[(i, j)]:
-                lastCoords = (i-1, j)
+                lastCoords = (i - 1, j)
                 lastConsideredBis = (lastCoords, origin)
                 get_all_paths(lastConsideredBis, paths, draftPathBis,
                               M_Previous, X_Previous, Y_Previous)
@@ -74,15 +73,16 @@ def get_all_paths(lastConsidered, paths, draftPath, M_Previous, X_Previous,
             if (i, j) not in M_Previous:
                 return 'M'
             for origin in M_Previous[(i, j)]:
-                lastCoords = (i-1, j-1)
+                lastCoords = (i - 1, j - 1)
                 lastConsideredBis = (lastCoords, origin)
                 get_all_paths(lastConsideredBis, paths, draftPathBis,
                               M_Previous, X_Previous, Y_Previous)
 
+
 # %% Method to get one path followed to compute a given matrix
 
 def get_one_path(lastConsidered, draftPath, M_Previous, X_Previous,
-                  Y_Previous):
+                 Y_Previous):
     """
     Input:
     Output: one optimal path leading to the bottom right square of the matrix
@@ -93,19 +93,19 @@ def get_one_path(lastConsidered, draftPath, M_Previous, X_Previous,
         if lastConsidered[1] == 'X':
             draftPath = draftPath + ['X']
             origin = X_Previous[(i, j)][0]
-            lastCoords = (i, j-1)
+            lastCoords = (i, j - 1)
             lastConsidered = (lastCoords, origin)
 
         if lastConsidered[1] == 'Y':
             draftPath = draftPath + ['Y']
             origin = Y_Previous[(i, j)][0]
-            lastCoords = (i-1, j)
+            lastCoords = (i - 1, j)
             lastConsidered = (lastCoords, origin)
 
         if lastConsidered[1] == 'M':
             draftPath = draftPath + ['M']
             origin = M_Previous[(i, j)][0]
-            lastCoords = (i-1, j-1)
+            lastCoords = (i - 1, j - 1)
             lastConsidered = (lastCoords, origin)
 
     return draftPath
@@ -123,9 +123,9 @@ def nw_affine_matrix_two(seq1, seq2, gap_create, gap_extend,
     """
     p = len(seq1)
     n = len(seq2)
-    M_Matrix = np.zeros((n+1, p+1))
-    X_Matrix = np.zeros((n+1, p+1))
-    Y_Matrix = np.zeros((n+1, p+1))
+    M_Matrix = np.zeros((n + 1, p + 1))
+    X_Matrix = np.zeros((n + 1, p + 1))
+    Y_Matrix = np.zeros((n + 1, p + 1))
     M_Previous = dict()
     X_Previous = dict()
     Y_Previous = dict()
@@ -133,25 +133,25 @@ def nw_affine_matrix_two(seq1, seq2, gap_create, gap_extend,
     seq1_onehot = sequence_one_hot(seq1)
 
     # Initialize first matrix cells (first column for X, first line for Y)
-    for i in range(n+1):
+    for i in range(n + 1):
         X_Matrix[(i, 0)] = - np.infty
         if (i > 0):
             M_Matrix[(i, 0)] = - np.infty
-            if(i==1):
-                Y_Matrix[(i, 0)] = gap_create
+            if (i == 1):
+                Y_Matrix[(i, 0)] = gap_create + gap_extend
                 Y_Previous[(i, 0)] = 'M'
             else:
-                Y_Matrix[(i, 0)] = Y_Matrix[(i-1, 0)] + gap_extend
+                Y_Matrix[(i, 0)] = Y_Matrix[(i - 1, 0)] + gap_extend
                 Y_Previous[(i, 0)] = 'Y'
-    for j in range(p+1):
+    for j in range(p + 1):
         Y_Matrix[(0, j)] = - np.infty
         if (j > 0):
             M_Matrix[(0, j)] = - np.infty
-            if(j==1):
-                X_Matrix[(0, j)] = gap_create
+            if (j == 1):
+                X_Matrix[(0, j)] = gap_create + gap_extend
                 X_Previous[(0, j)] = 'M'
             else:
-                X_Matrix[(0, j)] = X_Matrix[(0, j-1)] + gap_extend
+                X_Matrix[(0, j)] = X_Matrix[(0, j - 1)] + gap_extend
                 X_Previous[(0, j)] = 'X'
 
     # Now fill in the rest of the matrixes, recording the paths
@@ -164,29 +164,29 @@ def nw_affine_matrix_two(seq1, seq2, gap_create, gap_extend,
                                                                                            mismatch_score,
                                                                                            substitution_dict)
             # M
-            M_Previous[(i+1, j+1)] = []
+            M_Previous[(i + 1, j + 1)] = []
             score, resM = get_max_M(M_Matrix, X_Matrix, Y_Matrix, i, j)
             for origin in resM:
-                M_Previous[(i+1, j+1)].append(origin)
-                M_Matrix[(i+1, j+1)] = score + substitution_score
+                M_Previous[(i + 1, j + 1)].append(origin)
+                M_Matrix[(i + 1, j + 1)] = score + substitution_score
             # X
-            X_Previous[(i+1, j+1)] = []
-            score, resX = get_max_X(M_Matrix, X_Matrix, Y_Matrix, i+1, j,
+            X_Previous[(i + 1, j + 1)] = []
+            score, resX = get_max_X(M_Matrix, X_Matrix, Y_Matrix, i + 1, j,
                                     gap_create, gap_extend)
             for origin in resX:
-                X_Previous[(i+1, j+1)].append(origin)
-                X_Matrix[(i+1, j+1)] = score
+                X_Previous[(i + 1, j + 1)].append(origin)
+                X_Matrix[(i + 1, j + 1)] = score
             # Y
-            Y_Previous[(i+1, j+1)] = []
-            score, resY = get_max_Y(M_Matrix, X_Matrix, Y_Matrix, i, j+1,
+            Y_Previous[(i + 1, j + 1)] = []
+            score, resY = get_max_Y(M_Matrix, X_Matrix, Y_Matrix, i, j + 1,
                                     gap_create, gap_extend)
             for origin in resY:
-                Y_Previous[(i+1, j+1)].append(origin)
-                Y_Matrix[(i+1, j+1)] = score
+                Y_Previous[(i + 1, j + 1)].append(origin)
+                Y_Matrix[(i + 1, j + 1)] = score
     final_score, final_pos = get_max_M(M_Matrix, X_Matrix, Y_Matrix, n, p)
 
-    return(M_Matrix, X_Matrix, Y_Matrix, M_Previous, X_Previous, Y_Previous,
-           final_score, final_pos)
+    return (M_Matrix, X_Matrix, Y_Matrix, M_Previous, X_Previous, Y_Previous,
+            final_score, final_pos)
 
 
 # %% Method to get the sequence alignment corresponding to a given path
@@ -208,7 +208,7 @@ def from_path_to_als(path, seq1, seq2, offset):
             ind1 -= 1
             al2 = "-" + al2
             if (ind2 >= 0):
-                offset["seq2"] = offset["seq2"][0: ind2 + 1] + [-1] + offset["seq2"][ind2 + 1 : len(offset["seq2"])]
+                offset["seq2"] = offset["seq2"][0: ind2 + 1] + [-1] + offset["seq2"][ind2 + 1: len(offset["seq2"])]
             else:
                 offset["seq2"] = [-1] + offset["seq2"]
         else:
@@ -216,19 +216,22 @@ def from_path_to_als(path, seq1, seq2, offset):
             ind2 -= 1
             al1 = "-" + al1
             if (ind1 >= 0):
-                offset[seq1] = offset[seq1][0: ind1 + 1] + [-1] + offset[seq1][ind1 + 1 : len(offset[seq1])]
+                offset[seq1] = offset[seq1][0: ind1 + 1] + [-1] + offset[seq1][ind1 + 1: len(offset[seq1])]
             else:
                 offset[seq1] = [-1] + offset[seq1]
     return (al1, al2)
+
 
 # %%
 
 
 def nw_affine_two(seq1, seq2, gap_create, gap_extend, score_method,
-                  substitution_dict=dict(),offset=0, all_paths=False,
+                  substitution_dict=dict(), offset=0, all_paths=False,
                   mismatch_score=5):
-    M_Matrix, X_Matrix, Y_Matrix, M_Previous, X_Previous, Y_Previous, finalScore, finalPos = nw_affine_matrix_two(seq1, seq2,
-                                                                                                                  gap_create, gap_extend,
+    M_Matrix, X_Matrix, Y_Matrix, M_Previous, X_Previous, Y_Previous, finalScore, finalPos = nw_affine_matrix_two(seq1,
+                                                                                                                  seq2,
+                                                                                                                  gap_create,
+                                                                                                                  gap_extend,
                                                                                                                   score_method,
                                                                                                                   mismatch_score,
                                                                                                                   substitution_dict)
@@ -240,10 +243,11 @@ def nw_affine_two(seq1, seq2, gap_create, gap_extend, score_method,
         offset[seq1] = list(range(len(seq1)))
         offset["seq2"] = list(range(len(seq2)))
     for pos in finalPos:
-        get_all_paths(((n, p), pos), paths,  [], M_Previous, X_Previous,
-                             Y_Previous)
+        get_all_paths(((n, p), pos), paths, [], M_Previous, X_Previous,
+                      Y_Previous)
     alignments = from_path_to_als(paths[0], seq1, seq2, offset)
     return (alignments, finalScore)
+
 
 # %%
 
@@ -254,19 +258,17 @@ gap_create = 0
 gap_extend = -1
 
 reference = np.zeros((3, 4))
-reference[(0,0)] = 1
-reference[(1,0)] = 1
-reference[(2,0)] = 1
-
+reference[(0, 0)] = 1
+reference[(1, 0)] = 1
+reference[(2, 0)] = 1
 
 mismatch_score = 10
-
 
 # expect: AAT VS AA-A ou AA-T VS AAA
 
 score_method = "sum_proba_score"
 (alignments, finalScore) = nw_affine_two(query, reference, gap_create, gap_extend, score_method,
-                                         substitution_dict=dict(),offset=0, all_paths=False,
+                                         substitution_dict=dict(), offset=0, all_paths=False,
                                          mismatch_score=5)
 
 # %%
@@ -301,8 +303,3 @@ score_method = "sum_proba_score"
                                        offset=0, all_paths=False,
                                        mismatch_score=5)
 """
-
-
-
-
-
