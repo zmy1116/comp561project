@@ -1,7 +1,7 @@
 {
   "seed_matching_args": {
     "seed_matching_algorithm": "consensus_matching",
-    "seed_table_file": "src/data/hashtable.p",
+    "seed_table_file": "/home/NOBACKUP/mzhou3/comp561project/src/data/hashtable.p",
     "k": 11
   },
   "ungapped_extension_args": {
