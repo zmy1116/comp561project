@@ -59,7 +59,7 @@ def gapped_extension_one_side(seq_query, seq_ref, score_method,
 
 
 def gapped_extension(query, reference, ungapped_dict, score_method,
-                     substitution_dict, gap_penalty, gap_bias, mismatch_score):
+                     substitution_dict, gap_penalty, gap_bias, mismatch_score, ref_max_length_factor):
     """
     compute a gapped alignment
     generates an alignment between the query and the reference sequences
@@ -71,13 +71,13 @@ def gapped_extension(query, reference, ungapped_dict, score_method,
     :param substitution_dict: stores the cost of replacing one letter by another (typically from BLOSUM matrices)
     :param gap_bias: cost for opening a gap, if affine function
     :param gap_penalty: cost of a gap in the alignment
-
+    :param ref_max_length_factor:  do gapped extention of length FACTOR x ref_max_length_factor
     :return: gapped_extensions dict (positions, scores and strings)
     """
 
     reference_matrix = pickle.load(open(reference, 'rb'))
     # reference_matrix = reference
-    max_length = 3 * len(query)
+    max_length = ref_max_length_factor * len(query)
 
     gapped_extensions = []
 
@@ -128,7 +128,7 @@ def gapped_extension(query, reference, ungapped_dict, score_method,
                                                                                  substitution_dict, gap_penalty,
                                                                                  gap_bias, mismatch_score, 'left')
             if aligned:
-                ref_aligned_indices =  pos_l - (len(string_ref) - string_ref.count("-")), pos_l - 1
+                ref_aligned_indices = pos_l - (len(string_ref) - string_ref.count("-")), pos_l - 1
 
         left_alignment_result = {
             'ref_left_idx': ref_aligned_indices[0],
@@ -156,7 +156,8 @@ def gapped_extension(query, reference, ungapped_dict, score_method,
         final_result = {
             'ref_left_idx': gapped_extension_result['ref_left_idx'],
             'ref_right_idx': gapped_extension_result['ref_right_idx'],
-            'score': gapped_extension_result['score']  + extension['ungapped_extension_result']['score'] + extension['seed_matching_result']['score']
+            'score': gapped_extension_result['score'] + extension['ungapped_extension_result']['score'] +
+                     extension['seed_matching_result']['score']
         }
         extension['final_result'] = final_result
 

@@ -1,0 +1,21 @@
+{
+  "seed_matching_args": {
+    "seed_matching_algorithm": "consensus_matching",
+    "seed_table_file": "src/data/hashtable.p",
+    "k": 11
+  },
+  "ungapped_extension_args": {
+    "nt_score_method": "sum_proba_score_correct0",
+    "delta": 1,
+    "mismatch_score": 1,
+    "substitution": {}
+  },
+  "gapped_extension_args": {
+    "nt_score_method": "sum_proba_score_correct0",
+    "substitution": {},
+    "gap_penalty": -1,
+    "gap_bias": -1,
+    "mismatch_score": 1,
+    "ref_max_length_factor": 1
+  }
+}

@@ -6,8 +6,8 @@ affine gap penalty.
 # %% Useful imports
 
 import numpy as np
-from src.blast import ungapped_extension
 from src.utils.utils import sequence_one_hot
+from src.blast.nt_scoring_function import NT_SCORE_ALGORITHM
 
 
 # %% Methods to decide what to put in one matrix slot
@@ -159,10 +159,10 @@ def nw_affine_matrix_two(seq1, seq2, gap_create, gap_extend,
         letter2_probas = seq2[i]
         for j in range(p):
             letter1 = seq1_onehot[j]
-            substitution_score = ungapped_extension.UNGAPPED_SCORE_ALGORITHM[score_method](letter2_probas,
-                                                                                           letter1,
-                                                                                           mismatch_score,
-                                                                                           substitution_dict)
+            substitution_score = NT_SCORE_ALGORITHM[score_method](letter2_probas,
+                                                                  letter1,
+                                                                  mismatch_score,
+                                                                  substitution_dict)
             # M
             M_Previous[(i + 1, j + 1)] = []
             score, resM = get_max_M(M_Matrix, X_Matrix, Y_Matrix, i, j)
@@ -183,10 +183,18 @@ def nw_affine_matrix_two(seq1, seq2, gap_create, gap_extend,
             for origin in resY:
                 Y_Previous[(i + 1, j + 1)].append(origin)
                 Y_Matrix[(i + 1, j + 1)] = score
-    final_score, final_pos = get_max_M(M_Matrix, X_Matrix, Y_Matrix, n, p)
+    final_score, final_mat = get_max_M(M_Matrix, X_Matrix, Y_Matrix, 0, p)
+    final_pos = (0, p)
+
+    for k in range(1, n + 1):
+        tmp_score, tmp_mat = get_max_M(M_Matrix, X_Matrix, Y_Matrix, k, p)
+        if tmp_score > final_score:
+            final_score = tmp_score
+            final_mat = tmp_mat
+            final_pos = (k, p)
 
     return (M_Matrix, X_Matrix, Y_Matrix, M_Previous, X_Previous, Y_Previous,
-            final_score, final_pos)
+            final_score, final_pos, final_mat)
 
 
 # %% Method to get the sequence alignment corresponding to a given path
@@ -228,13 +236,14 @@ def from_path_to_als(path, seq1, seq2, offset):
 def nw_affine_two(seq1, seq2, gap_create, gap_extend, score_method,
                   substitution_dict=dict(), offset=0, all_paths=False,
                   mismatch_score=5):
-    M_Matrix, X_Matrix, Y_Matrix, M_Previous, X_Previous, Y_Previous, finalScore, finalPos = nw_affine_matrix_two(seq1,
-                                                                                                                  seq2,
-                                                                                                                  gap_create,
-                                                                                                                  gap_extend,
-                                                                                                                  score_method,
-                                                                                                                  mismatch_score,
-                                                                                                                  substitution_dict)
+    M_Matrix, X_Matrix, Y_Matrix, M_Previous, X_Previous, Y_Previous, finalScore, finalPos, finalMat = nw_affine_matrix_two(
+        seq1,
+        seq2,
+        gap_create,
+        gap_extend,
+        score_method,
+        mismatch_score,
+        substitution_dict)
     paths = []
     p = len(seq1)
     n = len(seq2)
@@ -242,8 +251,8 @@ def nw_affine_two(seq1, seq2, gap_create, gap_extend, score_method,
         offset = dict()
         offset[seq1] = list(range(len(seq1)))
         offset["seq2"] = list(range(len(seq2)))
-    for pos in finalPos:
-        get_all_paths(((n, p), pos), paths, [], M_Previous, X_Previous,
+    for mat in finalMat:
+        get_all_paths((finalPos, mat), paths, [], M_Previous, X_Previous,
                       Y_Previous)
     alignments = from_path_to_als(paths[0], seq1, seq2, offset)
     return (alignments, finalScore)

@@ -33,7 +33,6 @@ def consensus_seq_method(reference_matrix, k=11):
     return table
 
 
-
 @HASHTABLE_SEEDING_ALGORITHM.register('individual_nt_threshold')
 def individual_nt_threshold(reference_matrix, k=11, threshold=0.15,
                             characters="ACGT"):
@@ -62,7 +61,7 @@ def individual_nt_threshold(reference_matrix, k=11, threshold=0.15,
 
     for seed in current_seeds: table[seed] = [0]
 
-    for idx in range(1, N-k+1):
+    for idx in range(1, N - k + 1):
         new_current_seeds = {seed[1:] for seed in current_seeds}
         current_seeds = set()
         for char_idx in above_threshold[idx + k - 1]:
@@ -110,7 +109,7 @@ def consensus_seq_match(table_data, query):
     results = []
     query = seq2num(query)
     for idx in range(len(query) - k + 1):
-        query_seed = tuple(query[idx:idx+k])
+        query_seed = tuple(query[idx:idx + k])
         matches = hashtable.get(query_seed, [])
         if len(matches) > 0:
             for db_index in matches:
@@ -119,7 +118,7 @@ def consensus_seq_match(table_data, query):
                         'query_idx': idx,
                         'seed_matching_result': {
                             'ref_idx': db_index,
-                            'score': 0 # for now score is set to 0
+                            'score': 0  # for now score is set to 0
                         }
                     }
                 )
