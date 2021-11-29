@@ -125,11 +125,11 @@ def get_one_path(lastConsidered, draftPath, M_Previous, X_Previous,
 
 
 def nw_affine_matrix_two(seq1, seq2, gap_create, gap_extend,
-                         score_method, mismatch_score=5,
-                         substitution_dict=dict(),
-                         threshold_score, N):
+                         score_method, threshold_score, N,
+                         mismatch_score=5,
+                         substitution_dict=dict()):
     if threshold_score is None:
-        threshold_score = - np.infty
+        threshold_score = np.infty
     """
     Input: sequences to align and alignment info
     Output: best possible alignments and corresponding score
@@ -198,24 +198,17 @@ def nw_affine_matrix_two(seq1, seq2, gap_create, gap_extend,
                 Y_Matrix[(i + 1, j + 1)] = score
             
             # Check if we need to stop
-            curr_score = max[M_Matrix[(i + 1, j + 1)], X_Matrix[(i + 1, j + 1)], Y_Matrix[(i + 1, j + 1)]]
+            curr_score = max([M_Matrix[(i + 1, j + 1)], X_Matrix[(i + 1, j + 1)], Y_Matrix[(i + 1, j + 1)]])
             if curr_score >= threshold_score:
                 break
         if curr_score >= threshold_score:
             break
-    #Subset the matrices, if they didn't reach the end
-    M_Matrix = M_Matrix[0:i+1, 0:j+2]
-    X_Matrix = X_Matrix[0:i+1, 0:j+2]
-    Y_Matrix = Y_Matrix[0:i+1, 0:j+2]
-    M_Previous = M_Previous[0:i+1, 0:j+2]
-    X_Previous = X_Previous[0:i+1, 0:j+2]
-    Y_Previous = Y_Previous[0:i+1, 0:j+2]
     
     
     final_score, final_mat = get_max_M(M_Matrix, X_Matrix, Y_Matrix, 0, p)
     final_pos = (0, p)
 
-    for k in range(1, n + 1):
+    for k in range(1, i + 1):
         tmp_score, tmp_mat = get_max_M(M_Matrix, X_Matrix, Y_Matrix, k, p)
         if tmp_score > final_score:
             final_score = tmp_score
@@ -272,10 +265,10 @@ def nw_affine_two(seq1, seq2, gap_create, gap_extend, score_method,
         gap_create,
         gap_extend,
         score_method,
-        mismatch_score,
-        substitution_dict,
         threshold_score,
-        N)
+        N,
+        mismatch_score,
+        substitution_dict)
     paths = []
     p = len(seq1)
     n = len(seq2)
@@ -309,6 +302,7 @@ mismatch_score = 10
 
 score_method = "sum_proba_score"
 (alignments, finalScore) = nw_affine_two(query, reference, gap_create, gap_extend, score_method,
+                                         N=1, threshold_score=-np.infty,
                                          substitution_dict=dict(), offset=0, all_paths=False,
                                          mismatch_score=5)
 
