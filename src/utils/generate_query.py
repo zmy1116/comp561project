@@ -1,6 +1,7 @@
 import pickle
 import numpy as np
 
+
 # %%
 
 def generate_queries(reference_matrix, query_length, query_positions, num=1,
@@ -47,11 +48,11 @@ def generate_queries(reference_matrix, query_length, query_positions, num=1,
                 char_index = np.random.choice(np.arange(nb_chars), p=probas)
                 query += characters[char_index]
 
-            s=query
+            s = query
 
             if with_substitution:
                 query = add_substitutions(query, substitutions_probas=substitutions_probas,
-                non_substitution_proba=0.9, characters=characters)
+                                          non_substitution_proba=0.9, characters=characters)
 
             if with_indel:
                 query = add_indels(query, in_open, in_extend, del_open,
@@ -76,11 +77,12 @@ pyrimidines = {"T", "C"}
 
 for nt1 in nucleotides:
     for nt2 in nucleotides:
-        if nt1 == nt2: substitutions_probas[(nt1, nt2)] = non_substitution_proba
+        if nt1 == nt2:
+            substitutions_probas[(nt1, nt2)] = non_substitution_proba
         elif (nt1 in purines and nt2 in purines) or (nt1 in pyrimidines and nt2 in pyrimidines):
             substitutions_probas[(nt1, nt2)] = (1 - non_substitution_proba) / 2
-        else: substitutions_probas[(nt1, nt2)] = (1 - non_substitution_proba) / 4
-
+        else:
+            substitutions_probas[(nt1, nt2)] = (1 - non_substitution_proba) / 4
 
 
 # %% Adding substitutions
@@ -135,7 +137,7 @@ def add_indels(query, in_open=0.0017, in_extend=0.7, del_open=0.0017,
     """
 
     if nt_distribution == 0:
-        nt_distribution = [1/(len(characters)) for nt in characters]
+        nt_distribution = [1 / (len(characters)) for nt in characters]
 
     nb_chars = len(characters)
 
@@ -143,15 +145,15 @@ def add_indels(query, in_open=0.0017, in_extend=0.7, del_open=0.0017,
     current_pos = 0
     ongoing_in = False
     ongoing_del = False
-    probas_open = [in_open, del_open, 1-in_open-del_open]
-    probas_in = [in_extend, 1-in_extend]
-    probas_del = [del_extend, 1-del_extend]
-
+    probas_open = [in_open, del_open, 1 - in_open - del_open]
+    probas_in = [in_extend, 1 - in_extend]
+    probas_del = [del_extend, 1 - del_extend]
 
     while current_pos < len(query):
         if ongoing_del:
             extend = np.random.choice(np.arange(2), p=probas_del)
-            if extend == 0: current_pos += 1
+            if extend == 0:
+                current_pos += 1
             else:
                 new_query += query[current_pos]
                 current_pos += 1
@@ -180,5 +182,5 @@ def add_indels(query, in_open=0.0017, in_extend=0.7, del_open=0.0017,
                 current_pos += 1
                 ongoing_del = True
 
-    res.append(query==new_query)
+    res.append(query == new_query)
     return new_query
