@@ -115,8 +115,8 @@ def consensus_seq_match(table_data, query):
             for db_index in matches:
                 results.append(
                     {
-                        'query_idx': idx,
                         'seed_matching_result': {
+                            'query_idx': idx,
                             'ref_idx': db_index,
                             'score': 0  # for now score is set to 0
                         }

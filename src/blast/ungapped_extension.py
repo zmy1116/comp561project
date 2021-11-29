@@ -26,7 +26,7 @@ def ungapped_extension(query, matches_dict, reference_matrix_file, k, delta,
     ungapped_extensions = []
 
     for match in matches_dict:
-        query_idx = match['query_idx']
+        query_idx = match['seed_matching_result']['query_idx']
         match_idx = match['seed_matching_result']['ref_idx']
         query_left = query_idx
         query_right = query_left + k - 1
