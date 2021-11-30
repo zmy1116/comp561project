@@ -9,13 +9,14 @@ HASHTABLE_MATCHING_ALGORITHM = Registry()
 
 
 @HASHTABLE_SEEDING_ALGORITHM.register('consensus_seed_seq')
-def consensus_seq_method(reference_matrix, k=11):
+def consensus_seq_method(reference_matrix, k=11, characters="ACGT"):
     """
     method 1
     take the most likely sequence out of reference matrix, and directly building seed table
 
     :param reference_matrix: reference probability matrix
     :param k:  seed size
+    :param characters: list of NT
     :return:  seed table
     """
     consensus_seq = np.argmax(reference_matrix, axis=1)
@@ -24,7 +25,7 @@ def consensus_seq_method(reference_matrix, k=11):
 
     for idx in range(len(consensus_seq) - k + 1):
 
-        seed = tuple(consensus_seq[idx:idx + k])
+        seed = ''.join([characters[x] for x in consensus_seq[idx:idx + k]])
         if seed in table:
             table[seed].append(idx)
         else:
@@ -107,9 +108,8 @@ def consensus_seq_match(table_data, query):
     hashtable = table_data['hashtable']
     k = table_data['k']
     results = []
-    query = seq2num(query)
     for idx in range(len(query) - k + 1):
-        query_seed = tuple(query[idx:idx + k])
+        query_seed = query[idx:idx + k]
         matches = hashtable.get(query_seed, [])
         if len(matches) > 0:
             for db_index in matches:
