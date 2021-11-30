@@ -5,7 +5,7 @@ import numpy as np
 # %%
 
 def generate_queries(reference_matrix, query_length, query_positions, num=1,
-                     with_substitution=False, with_indel=False,
+                     with_substitution=False, non_substitution_proba=0.9, with_indel=False,
                      characters="ACGT", in_open=0.0017, in_extend=0.7,
                      del_open=0.0017, del_extend=0.7, nt_distribution=0):
     """
@@ -52,7 +52,7 @@ def generate_queries(reference_matrix, query_length, query_positions, num=1,
 
             if with_substitution:
                 query = add_substitutions(query, substitutions_probas=substitutions_probas,
-                                          non_substitution_proba=0.9, characters=characters)
+                                          non_substitution_proba=non_substitution_proba, characters=characters)
 
             if with_indel:
                 query = add_indels(query, in_open, in_extend, del_open,
