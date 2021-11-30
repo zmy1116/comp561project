@@ -16,6 +16,8 @@
     "gap_penalty": -1,
     "gap_bias": -1,
     "mismatch_score": 1,
-    "ref_max_length_factor": 1
+    "ref_max_length_factor": 1,
+	"threshold_score": 5,
+	"N": 5
   }
 }
