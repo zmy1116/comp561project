@@ -78,6 +78,7 @@ def gapped_extension(query, reference, ungapped_dict, score_method,
     reference_matrix = pickle.load(open(reference, 'rb'))
     # reference_matrix = reference
     max_length = ref_max_length_factor * len(query)
+    ungapped_dict = sorted(ungapped_dict, key=lambda x: -1 * x['ungapped_extension_result']['score'])[:100]
 
     gapped_extensions = []
 

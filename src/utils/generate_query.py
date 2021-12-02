@@ -1,8 +1,24 @@
 import pickle
 import numpy as np
+import random
 
 
 # %%
+
+def generate_fix_indel_del(query, do_indel, do_del, indel_size, del_size):
+    if do_indel:
+        indel_size = random.randint(indel_size[0], indel_size[1])
+        pos = random.randint(0, len(query))
+        inserts = ''.join(['ACGT'[random.randint(0, 3)] for _ in range(indel_size)])
+        query = query[:pos] + inserts + query[pos:]
+
+    if do_del:
+        del_size = random.randint(del_size[0], del_size[1])
+        pos = random.randint(0, len(query) - del_size)
+        query = query[:pos] + query[pos + del_size:]
+
+    return query
+
 
 def generate_queries(reference_matrix, query_length, query_positions, num=1,
                      with_substitution=False, non_substitution_proba=0.9, with_indel=False,
@@ -21,7 +37,7 @@ def generate_queries(reference_matrix, query_length, query_positions, num=1,
     :param in_extend: probability that an insertion is extended
     :param del_open: probability that an insertion starts
     :param del_extend: probability that an insertion is extended
-    :nt_distribution: either 0 if non specified or a*list*, reference
+    :param nt_distribution: either 0 if non specified or a*list*, reference
     nucleotide distribution to fill the insertions in an appropriate manner,
     same order as in characters
     :output: list of dictionary {label position, query string}, no extra substitution or indel yet
@@ -48,12 +64,23 @@ def generate_queries(reference_matrix, query_length, query_positions, num=1,
                 char_index = np.random.choice(np.arange(nb_chars), p=probas)
                 query += characters[char_index]
 
-            s = query
-
             if with_substitution:
+                nucleotides = "ACGT"
+                substitutions_probas = dict()
+                purines = {"A", "G"}
+                pyrimidines = {"T", "C"}
+
+                for nt1 in nucleotides:
+                    for nt2 in nucleotides:
+                        if nt1 == nt2:
+                            substitutions_probas[(nt1, nt2)] = non_substitution_proba
+                        elif (nt1 in purines and nt2 in purines) or (nt1 in pyrimidines and nt2 in pyrimidines):
+                            substitutions_probas[(nt1, nt2)] = (1 - non_substitution_proba) / 2
+                        else:
+                            substitutions_probas[(nt1, nt2)] = (1 - non_substitution_proba) / 4
+
                 query = add_substitutions(query, substitutions_probas=substitutions_probas,
                                           non_substitution_proba=non_substitution_proba, characters=characters)
-
             if with_indel:
                 query = add_indels(query, in_open, in_extend, del_open,
                                    del_extend, characters, nt_distribution)
@@ -66,27 +93,8 @@ def generate_queries(reference_matrix, query_length, query_positions, num=1,
     return queries_data
 
 
-# %% Substitutions probabilities
-# Transitions are more likely than transversions
-
-nucleotides = "ACGT"
-non_substitution_proba = 0.9
-substitutions_probas = dict()
-purines = {"A", "G"}
-pyrimidines = {"T", "C"}
-
-for nt1 in nucleotides:
-    for nt2 in nucleotides:
-        if nt1 == nt2:
-            substitutions_probas[(nt1, nt2)] = non_substitution_proba
-        elif (nt1 in purines and nt2 in purines) or (nt1 in pyrimidines and nt2 in pyrimidines):
-            substitutions_probas[(nt1, nt2)] = (1 - non_substitution_proba) / 2
-        else:
-            substitutions_probas[(nt1, nt2)] = (1 - non_substitution_proba) / 4
-
-
 # %% Adding substitutions
-def add_substitutions(query, substitutions_probas=substitutions_probas, non_substitution_proba=0.9, characters="ACGT"):
+def add_substitutions(query, substitutions_probas, non_substitution_proba=0.9, characters="ACGT"):
     """
     Starting from a query sequence, add substitutions to it
     :param query: query sequence to modify
@@ -100,7 +108,6 @@ def add_substitutions(query, substitutions_probas=substitutions_probas, non_subs
     :output: modified query with random substitutions in it
     """
     nb_chars = len(characters)
-
     if substitutions_probas == 0:
         # equiprobability for all substitutions
         substitutions_probas = dict()
@@ -182,5 +189,4 @@ def add_indels(query, in_open=0.0017, in_extend=0.7, del_open=0.0017,
                 current_pos += 1
                 ongoing_del = True
 
-    res.append(query == new_query)
     return new_query

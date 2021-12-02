@@ -9,7 +9,7 @@ HASHTABLE_MATCHING_ALGORITHM = Registry()
 
 
 @HASHTABLE_SEEDING_ALGORITHM.register('consensus_seed_seq')
-def consensus_seq_method(reference_matrix, k=11, characters="ACGT"):
+def consensus_seq_method(reference_matrix, k=11, characters="ACGT", **kwargs):
     """
     method 1
     take the most likely sequence out of reference matrix, and directly building seed table
@@ -53,7 +53,9 @@ def individual_nt_threshold(reference_matrix, k=11, threshold=0.15,
     above_threshold = dict()
 
     for idx in range(N):
-        line_above_threshold = list(np.where(reference_matrix[idx] >= threshold)[0])
+        #line_above_threshold = list(np.where(reference_matrix[idx] >= threshold)[0])
+        line_above_threshold = list(np.where(reference_matrix[idx] >= threshold)[0]) + [np.argmax(reference_matrix[idx])]
+        line_above_threshold = list(set(line_above_threshold))
         above_threshold[idx] = line_above_threshold
 
     current_seeds = set()
@@ -77,7 +79,7 @@ def individual_nt_threshold(reference_matrix, k=11, threshold=0.15,
     return table
 
 
-def hashtable_generation(reference_matrix_file, method, k, output_path=""):
+def hashtable_generation(reference_matrix_file, method, k, output_path="", **kwargs):
     """
     generate and store seed table for blast
     :param reference_matrix_file: reference matrix file
@@ -88,7 +90,7 @@ def hashtable_generation(reference_matrix_file, method, k, output_path=""):
     """
     assert method in HASHTABLE_SEEDING_ALGORITHM
     reference_matrix = pickle.load(open(reference_matrix_file, 'rb'))
-    table = HASHTABLE_SEEDING_ALGORITHM[method](reference_matrix, k)
+    table = HASHTABLE_SEEDING_ALGORITHM[method](reference_matrix, k, **kwargs)
     table_data = {
         'method': method,
         'hashtable': table,
