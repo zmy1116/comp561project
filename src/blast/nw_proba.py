@@ -280,35 +280,4 @@ score_method = "sum_proba_score"
                                          substitution_dict=dict(), offset=0, all_paths=False,
                                          mismatch_score=5)
 
-# %%
-"""
-reference = reference_matrix[14069:14147]
-query = "A" * 26
-s_query = query[12:]
-score_method = "sum_proba_score"
-nw_affine_two(s_query, reference, -1, -2, score_method,
-              substitution_dict=dict(),offset=0, all_paths=False,
-              mismatch_score=5)
-"""
 
-"""
-pos_left_q = 15
-query = "T" + "A" * 26
-seq1 = query[:pos_left_q][::-1]
-print(seq1)
-max_length = 3 * len(query)
-pos_left_ref = 593383
-seq2 = reference_matrix[max(0, pos_left_ref - 1 - max_length):pos_left_ref][::-1]
-print(seq2)
-
-gap_create = -5
-gap_extend = -1
-mismatch_score = 5
-score_method = "sum_proba_score"
-
-
-(alignments, finalScore)=nw_affine_two(seq1, seq2, gap_create, gap_extend,
-                                       score_method, substitution_dict=dict(),
-                                       offset=0, all_paths=False,
-                                       mismatch_score=5)
-"""
