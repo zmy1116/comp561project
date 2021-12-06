@@ -4,7 +4,7 @@ import json
 import argparse
 from src.blast.hashtable_generation_inference import consensus_seq_match
 from src.blast.ungapped_extension import ungapped_extension
-from src.blast.gapped_extension_j_mingmodified import gapped_extension
+from src.blast.gapped_extension import gapped_extension
 
 DEFAULT_BLAST_ARGS = json.load(open(os.path.join(os.path.dirname(__file__), 'config', 'default_blast_args.json'), 'r'))
 

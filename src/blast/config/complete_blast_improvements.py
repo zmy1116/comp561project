@@ -47,7 +47,7 @@ def blast(query, reference_matrix_file, seed_matching_args, ungapped_extension_a
 
     outputs_step4 = sorted(outputs_step4, key=lambda x: x['final_result']['score'] * -1)
 
-    return outputs_step3
+    return outputs_step4
 
 
 def parse_args():
