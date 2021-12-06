@@ -6,6 +6,9 @@ project for comp561
 git clone https://github.com/zmy1116/comp561project
 export PYTHONPATH = LOCAL_PACKAGE_PATH 
 cd LOCAL_PACKAGE_PATH
+
+# download hashtable to specific folder 
+wget https://cs561project.s3.amazonaws.com/hashtable_015.p -P src/data
 ```
 
 ## Data
